@@ -1,0 +1,63 @@
+# -------------------------
+# Node / Backend
+# -------------------------
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Runtime files
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage
+coverage/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Debuggers
+.vscode/
+.idea/
+
+# -------------------------
+# React / Frontend (client/)
+# -------------------------
+client/node_modules/
+client/build/
+client/dist/
+client/.env
+client/.env.local
+client/.env.*.local
+
+# React cache
+client/.parcel-cache/
+client/.next/
+client/.vercel/
+
+# Production bundles
+client/*.tgz
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Optional: Ignore compiled JS (backend)
+# -------------------------
+**/*.js.map
