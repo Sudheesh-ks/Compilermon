@@ -5,11 +5,7 @@ import { SiJavascript, SiPython, SiCplusplus, SiTypescript } from 'react-icons/s
 interface CompilerProps {}
 
 const Compiler: React.FC<CompilerProps> = () => {
-  const [code, setCode] = useState(`function fibonacci(n) {
-  if (n <= 1) return n;
-  return fibonacci(n - 1) + fibonacci(n - 2);
-}
-// }`);
+  const [code, setCode] = useState(`console.log("Welcome to Compilermon")`);
 
   const [language, setLanguage] = useState('javascript');
   const [output, setOutput] = useState('Ready to run your code...');
@@ -48,29 +44,31 @@ const Compiler: React.FC<CompilerProps> = () => {
     }
   };
 
-  const runCode = async () => {
-    setIsRunning(true);
-    setOutput('Running...');
+ const runCode = async () => {
+  setIsRunning(true);
+  setOutput("Running...");
 
-    setTimeout(() => {
-      setOutput(
-        `Fibonacci sequence:
-F(0) = 0
-F(1) = 1
-F(2) = 1
-F(3) = 2
-F(4) = 3
-F(5) = 5
-F(6) = 8
-F(7) = 13
-F(8) = 21
-F(9) = 34
+  try {
+    const res = await fetch("http://localhost:3000/api/run", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ language, code }),
+    });
 
-Execution completed in 42ms`
-      );
-      setIsRunning(false);
-    }, 1500);
-  };
+    const data = await res.json();
+
+    if (data.output) {
+      setOutput(data.output);
+    } else {
+      setOutput("Error:\n" + data.error);
+    }
+  } catch (err) {
+    setOutput("Server error: " + err);
+  }
+
+  setIsRunning(false);
+};
+
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono flex flex-col">
@@ -102,7 +100,7 @@ Execution completed in 42ms`
 
         {/* Editor */}
         <div className="flex-1 flex flex-col">
-          <div className="bg-gray-900/50 border-b border-green-500/20 p-3">
+          <div className="bg-gray-900/50 border-b border-green-500/20 p-3 flex justify-end">
             <button
               onClick={runCode}
               disabled={isRunning}
