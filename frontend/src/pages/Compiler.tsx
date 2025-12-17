@@ -1,74 +1,65 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Play } from 'lucide-react';
-import { SiJavascript, SiPython, SiCplusplus, SiTypescript } from 'react-icons/si';
+import React, { useState, useRef } from "react";
+import Editor from "@monaco-editor/react";
+import { Play } from "lucide-react";
+import {
+  SiJavascript,
+  SiPython,
+  SiCplusplus,
+  SiTypescript,
+} from "react-icons/si";
+import starterCodeMap from "../utils/StarterCodeMap";
 
-interface CompilerProps {}
 
-const Compiler: React.FC<CompilerProps> = () => {
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+
+const Compiler: React.FC = () => {
   const [code, setCode] = useState(`console.log("Welcome to Compilermon")`);
 
-  const [language, setLanguage] = useState('javascript');
-  const [output, setOutput] = useState('Ready to run your code...');
+  const [language, setLanguage] = useState("javascript");
+  const [output, setOutput] = useState("Ready to run your code...");
   const [isRunning, setIsRunning] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = useRef<HTMLDivElement>(null);
 
   const languages = [
-    { value: 'javascript', label: 'JavaScript', icon: <SiJavascript size={28} /> },
-    { value: 'python', label: 'Python', icon: <SiPython size={28} /> },
-    { value: 'cpp', label: 'C++', icon: <SiCplusplus size={28} /> },
-    { value: 'typescript', label: 'TypeScript', icon: <SiTypescript size={28} /> },
+    {
+      value: "javascript",
+      label: "JavaScript",
+      icon: <SiJavascript size={28} />,
+    },
+    { value: "python", label: "Python", icon: <SiPython size={28} /> },
+    { value: "cpp", label: "C++", icon: <SiCplusplus size={28} /> },
+    {
+      value: "typescript",
+      label: "TypeScript",
+      icon: <SiTypescript size={28} />,
+    },
   ];
 
-  useEffect(() => {
-    updateLineNumbers();
-  }, [code]);
+  const runCode = async () => {
+    setIsRunning(true);
+    setOutput("Running...");
 
-  const updateLineNumbers = () => {
-    if (lineNumbersRef.current) {
-      const lines = code.split('\n').length;
-      lineNumbersRef.current.innerHTML = Array.from(
-        { length: lines },
-        (_, i) => `<div class="line-number">${i + 1}</div>`
-      ).join('');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/run`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ language, code }),
+      });
+
+      const data = await res.json();
+
+      if (data.output) {
+        setOutput(data.output);
+      } else {
+        setOutput("Error:\n" + data.error);
+      }
+    } catch (err) {
+      setOutput("Server error: " + err);
     }
+
+    setIsRunning(false);
   };
-
-  const handleCodeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setCode(e.target.value);
-  };
-
-  const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
-    if (lineNumbersRef.current) {
-      lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
-    }
-  };
-
- const runCode = async () => {
-  setIsRunning(true);
-  setOutput("Running...");
-
-  try {
-    const res = await fetch("http://localhost:3000/api/run", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ language, code }),
-    });
-
-    const data = await res.json();
-
-    if (data.output) {
-      setOutput(data.output);
-    } else {
-      setOutput("Error:\n" + data.error);
-    }
-  } catch (err) {
-    setOutput("Server error: " + err);
-  }
-
-  setIsRunning(false);
-};
-
 
   return (
     <div className="min-h-screen bg-black text-green-400 font-mono flex flex-col">
@@ -78,18 +69,21 @@ const Compiler: React.FC<CompilerProps> = () => {
       </div>
 
       <div className="flex flex-1 w-full max-w-7xl mx-auto">
-        
         {/* LANGUAGE ICON SIDEBAR CENTERED */}
-        <div className="w-16 bg-gray-900 border-r border-green-500/30 p-2 flex flex-col items-center justify-center space-y-4">
-          {languages.map(lang => (
+        <div className="w-16 bg-gray-900 border-r border-green-500/30 p-2 flex flex-col items-center pt-54 space-y-4">
+          {languages.map((lang) => (
             <button
               key={lang.value}
-              onClick={() => setLanguage(lang.value)}
+              onClick={() => {setLanguage(lang.value);
+                setCode(starterCodeMap[lang.value])
+              }}
               className={`
                 w-12 h-12 rounded-lg flex items-center justify-center transition-all
-                ${language === lang.value
-                  ? "bg-green-600 text-black shadow shadow-green-400 scale-110"
-                  : "bg-gray-800 text-green-400 hover:bg-gray-700"}
+                ${
+                  language === lang.value
+                    ? "bg-green-600 text-black shadow shadow-green-400 scale-110"
+                    : "bg-gray-800 text-green-400 hover:bg-gray-700"
+                }
               `}
               title={lang.label}
             >
@@ -111,8 +105,7 @@ const Compiler: React.FC<CompilerProps> = () => {
             </button>
           </div>
 
-          <div className="flex-1 flex bg-gray-900">
-            
+          <div className="flex-1 flex bg-gray-900 overflow-hidden">
             {/* LINE NUMBERS */}
             <div
               ref={lineNumbersRef}
@@ -121,15 +114,22 @@ const Compiler: React.FC<CompilerProps> = () => {
             />
 
             {/* TEXTAREA */}
-            <textarea
-              ref={textareaRef}
+            <div className="flex-1 overflow-auto">
+            <Editor
+              height="100%"
+              language={language}
               value={code}
-              onChange={handleCodeChange}
-              onScroll={handleScroll}
-              className="w-full h-full bg-transparent text-green-400 p-4 leading-6 resize-none outline-none"
-              style={{ fontFamily: "Monaco, Consolas", fontSize: "14px" }}
-              spellCheck={false}
+              onChange={(value) => setCode(value || "")}
+              theme="vs-dark"
+              options={{
+                minimap: { enabled: false },
+                autoClosingBrackets: "always",
+                autoIndent: "full",
+                fontFamily: "Monaco",
+                fontSize: 14,
+              }}
             />
+            </div>
           </div>
         </div>
 
